@@ -162,6 +162,6 @@ printAllMonkeys()
 print("-----Monkey Inspects-----")
 printMonkeyInspects()
 
-print("-----Final Ansswer-----")
+print("-----Final Answer-----")
 print(calculateAnswer())
 
