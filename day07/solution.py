@@ -1,63 +1,97 @@
-filein = open("day7/input.txt", "r")
-
-lines = filein.readlines()
-
-dirDict = {"/": []}
-fileDict = {}
-location = "/"
-
-for line in lines:
-    line = line.split()
-    
-    if line[0] == "$":
-        if line[1] == "cd":
-            if line[2] == "..":
-                location = "/".join(location.split("/")[0:-2]) + "/" # move back one folder
-
-            else:
-                if line[2] != "/":
-                    location += line[2] + "/" # set location to cd value
-    
-    elif line[0] == "dir":
-        dirDict[location].append(location + line[1] + "/") # add the directory to the dictionary
-        dirDict[dirDict[location][-1]] = [] # create a new entry for the dictionary at the recent added value
+class Folder:
+    def __init__(self, name, parent) -> None:
+        self.name = name
+        self.parent = parent
+        self.size = 0
+        self.subs = []
+        self.totalsize = 0
         
-    else: # file size case
-        if location not in fileDict:
-            fileDict[location] = 0
-
-        fileDict[location] += int(line[0])
-
-def findFolderSize(folder):
-    if folder in fileDict:
-        total = fileDict[folder]
-    else:
-        total = 0
-    
-    for directory in dirDict[folder]:
-        total += findFolderSize(directory)
+    def add_sub(self, name):
+        folder = Folder(name, self)
+        self.subs.append(folder)
         
-    return total
+        return folder
+    
+    def add_size(self, size):
+        self.size += size
+        
+    def calculatetotalsize(self):
+        total = self.size
+        
+        for sub in self.subs:
+            total += sub.calculatetotalsize()
+            
+        self.totalsize = total
+        return self.totalsize
+    
+    def calculateTotalLimited(self, limit):
+        global total_limited
+        
+        if self.totalsize <= limit:
+            total_limited += self.totalsize
+            
+        for sub in self.subs:
+            sub.calculateTotalLimited(limit)
 
+    def findClosest(self, goal):
+        # folder has to be bigger than goal but as close as possible
+        global smallest
+        
+        if self.totalsize > goal and self.totalsize < smallest:
+            smallest = self.totalsize
+            
+        for sub in self.subs:
+            sub.findClosest(goal)
 
-total = 70000000
-needed = 30000000
+def processInput():
+    lines = open("day07/input.txt", "r").readlines()
+    
+    dummy = Folder(None, None)
+    
+    current = dummy
+    for line in lines:
+        line = line.split()
+        
+        if line[0] == "$":
+            if line[1] == "cd":
+                if line[2] == "..":
+                    current = current.parent
+                else:
+                    current = current.add_sub(line[2])
+        elif line[0].isdigit():
+            current.add_size(int(line[0]))
+            
+    return dummy.subs[0]
 
-used = findFolderSize("/") # 5000000
-spaceDeleted = used - (total - needed)
+def part1():
+    root = processInput()
+    root.calculatetotalsize()
+    
+    global total_limited
+    total_limited = 0
+    
+    limit = 100000
+    root.calculateTotalLimited(limit)
+    
+    return total_limited
 
-#print(used - spaceDeleted)
-result = findFolderSize("/")
-for folder in dirDict:
-    fs = findFolderSize(folder)
-    if fs >= spaceDeleted and result > fs:
-        result = fs
+def part2():
+    root = processInput()
+    root.calculatetotalsize()
+    
+    global smallest
+    smallest = root.totalsize
+    
+    total = 70000000
+    needed = 30000000
+    
+    used = root.totalsize
+    
+    deleted = used - (total - needed)
+    
+    root.findClosest(deleted)
+    
+    return smallest
 
-print(result)
-# total should be 41272621
-"""
-print(fileDict["/"])
-total = 0
-for folder in dirDict["/"]:
-    print(folder + " size: " + str(findFolderSize(folder)))
-"""
+print(part1())
+print(part2())
