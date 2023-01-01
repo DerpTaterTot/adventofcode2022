@@ -72,5 +72,5 @@ def compute(numBoxes, reverse):
     return boxes.returnTopCrates()
 
 numBoxes = 9             
-print("day 1:", compute(numBoxes, False))
-print("day 2:", compute(numBoxes, True))
+print("part1:", compute(numBoxes, False))
+print("part2:", compute(numBoxes, True))
